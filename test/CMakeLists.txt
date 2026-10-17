@@ -17,3 +17,15 @@ target_link_options(spsc_tests PRIVATE
 
 include(GoogleTest)
 gtest_discover_tests(spsc_tests)
+
+if(CLANG_TIDY_EXECUTABLE)
+    spsc_add_tidy_check(spsc_tests "${SPSC_CLANG_TIDY_CONFIG}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/spsc_test.cpp"
+    )
+endif()
+
+if(CLANG_FORMAT_EXECUTABLE)
+    spsc_add_format_targets(spsc_tests "${SPSC_CLANG_FORMAT_CONFIG}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/spsc_test.cpp"
+    )
+endif()

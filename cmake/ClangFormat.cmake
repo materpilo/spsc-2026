@@ -4,41 +4,40 @@ find_program(CLANG_FORMAT_EXECUTABLE
 )
 
 if(CLANG_FORMAT_EXECUTABLE)
-    set(SPSC_FORMAT_SOURCES
-        "${PROJECT_SOURCE_DIR}/src/spsc.hpp"
-    )
-    if(BUILD_TESTING)
-        list(APPEND SPSC_FORMAT_SOURCES
-            "${PROJECT_SOURCE_DIR}/test/spsc_test.cpp"
+    add_custom_target(spsc_format_check)
+    add_custom_target(spsc_format)
+
+    function(spsc_add_format_targets component config_file)
+        set(sources ${ARGN})
+        string(JOIN ", " source_list ${sources})
+
+        add_custom_target(${component}_format_check
+            COMMAND "${CMAKE_COMMAND}" -E echo
+                "clang-format will check: ${source_list}"
+            COMMAND "${CLANG_FORMAT_EXECUTABLE}"
+                "--style=file:${config_file}"
+                --dry-run
+                --Werror
+                --verbose
+                ${sources}
+            COMMENT "Checking C++ formatting for ${component}"
+            VERBATIM
         )
-    endif()
+        add_dependencies(spsc_format_check ${component}_format_check)
 
-    add_custom_target(spsc_format_check
-        COMMAND "${CMAKE_COMMAND}" -E echo
-            "clang-format will check: ${SPSC_FORMAT_SOURCES}"
-        COMMAND "${CLANG_FORMAT_EXECUTABLE}"
-            "--style=file:${PROJECT_SOURCE_DIR}/clang-format"
-            --dry-run
-            --Werror
-            --verbose
-            ${SPSC_FORMAT_SOURCES}
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        COMMENT "Checking C++ formatting with clang-format"
-        VERBATIM
-    )
-
-    add_custom_target(spsc_format
-        COMMAND "${CMAKE_COMMAND}" -E echo
-            "clang-format will modify: ${SPSC_FORMAT_SOURCES}"
-        COMMAND "${CLANG_FORMAT_EXECUTABLE}"
-            "--style=file:${PROJECT_SOURCE_DIR}/clang-format"
-            -i
-            --verbose
-            ${SPSC_FORMAT_SOURCES}
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        COMMENT "Formatting C++ sources with clang-format"
-        VERBATIM
-    )
+        add_custom_target(${component}_format
+            COMMAND "${CMAKE_COMMAND}" -E echo
+                "clang-format will modify: ${source_list}"
+            COMMAND "${CLANG_FORMAT_EXECUTABLE}"
+                "--style=file:${config_file}"
+                -i
+                --verbose
+                ${sources}
+            COMMENT "Formatting C++ sources for ${component}"
+            VERBATIM
+        )
+        add_dependencies(spsc_format ${component}_format)
+    endfunction()
 else()
     message(WARNING "clang-format was not found; format targets are unavailable.")
 endif()

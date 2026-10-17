@@ -4,21 +4,42 @@ find_program(CLANG_TIDY_EXECUTABLE
 )
 
 if(CLANG_TIDY_EXECUTABLE)
-    set(SPSC_TIDY_SOURCES
-        "${PROJECT_SOURCE_DIR}/test/spsc_test.cpp"
-    )
+    add_custom_target(spsc_tidy_check)
 
-    add_custom_target(spsc_tidy_check
-        COMMAND "${CMAKE_COMMAND}" -E echo
-            "clang-tidy will analyze: ${SPSC_TIDY_SOURCES}"
-        COMMAND "${CLANG_TIDY_EXECUTABLE}"
-            "--config-file=${PROJECT_SOURCE_DIR}/clang-tidy"
-            -p "${CMAKE_BINARY_DIR}"
-            ${SPSC_TIDY_SOURCES}
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        COMMENT "Running clang-tidy"
-        VERBATIM
-    )
+    function(spsc_add_tidy_check component config_file)
+        set(sources ${ARGN})
+        string(JOIN ", " source_list ${sources})
+
+        add_custom_target(${component}_tidy_check
+            COMMAND "${CMAKE_COMMAND}" -E echo
+                "clang-tidy will analyze: ${source_list}"
+            COMMAND "${CLANG_TIDY_EXECUTABLE}"
+                "--config-file=${config_file}"
+                -p "${CMAKE_BINARY_DIR}"
+                ${sources}
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+            COMMENT "Running clang-tidy for ${component}"
+            VERBATIM
+        )
+        add_dependencies(spsc_tidy_check ${component}_tidy_check)
+    endfunction()
+
+    function(spsc_add_tidy_header_check component config_file header_file include_directory)
+        add_custom_target(${component}_tidy_check
+            COMMAND "${CMAKE_COMMAND}" -E echo
+                "clang-tidy will analyze: ${header_file}"
+            COMMAND "${CLANG_TIDY_EXECUTABLE}"
+                "--config-file=${config_file}"
+                "${header_file}"
+                --
+                "-std=c++${CMAKE_CXX_STANDARD}"
+                "-I${include_directory}"
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+            COMMENT "Running clang-tidy for ${component}"
+            VERBATIM
+        )
+        add_dependencies(spsc_tidy_check ${component}_tidy_check)
+    endfunction()
 else()
-    message(WARNING "clang-tidy was not found; target spsc_tidy_check is unavailable.")
+    message(WARNING "clang-tidy was not found; tidy-check targets are unavailable.")
 endif()
