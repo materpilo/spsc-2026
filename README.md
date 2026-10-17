@@ -1,8 +1,8 @@
 # spsc
 
 A C++20 single-producer, single-consumer queue project. The repository contains
-the `spsc` library and the `spsc_tests` GoogleTest executable. CMake downloads
-GoogleTest via CPM when tests are enabled.
+the header-only `spsc` library and the `spsc_tests` GoogleTest executable. CMake
+downloads GoogleTest via CPM when tests are enabled.
 
 ## Requirements
 
@@ -21,8 +21,9 @@ cmake --build --preset gcc-ninja
 ctest --preset gcc-ninja
 ```
 
-The preset uses Ninja and GCC. It configures a Release build for the library and
-compiles the tests with Debug flags and AddressSanitizer/UndefinedBehaviorSanitizer.
+The preset uses Ninja and GCC and compiles the test executable with Debug flags
+and AddressSanitizer/UndefinedBehaviorSanitizer. As a header-only library,
+`spsc` is compiled as part of its consumers.
 
 ## Optional code checks
 

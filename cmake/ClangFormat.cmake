@@ -5,7 +5,6 @@ find_program(CLANG_FORMAT_EXECUTABLE
 
 if(CLANG_FORMAT_EXECUTABLE)
     set(SPSC_FORMAT_SOURCES
-        "${PROJECT_SOURCE_DIR}/src/spsc.cpp"
         "${PROJECT_SOURCE_DIR}/src/spsc.hpp"
     )
     if(BUILD_TESTING)

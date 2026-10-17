@@ -5,13 +5,8 @@ find_program(CLANG_TIDY_EXECUTABLE
 
 if(CLANG_TIDY_EXECUTABLE)
     set(SPSC_TIDY_SOURCES
-        "${PROJECT_SOURCE_DIR}/src/spsc.cpp"
+        "${PROJECT_SOURCE_DIR}/test/spsc_test.cpp"
     )
-    if(BUILD_TESTING)
-        list(APPEND SPSC_TIDY_SOURCES
-            "${PROJECT_SOURCE_DIR}/test/spsc_test.cpp"
-        )
-    endif()
 
     add_custom_target(spsc_tidy_check
         COMMAND "${CMAKE_COMMAND}" -E echo

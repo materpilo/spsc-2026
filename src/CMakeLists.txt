@@ -1,23 +1,12 @@
-add_library(spsc
-    spsc.cpp
-    spsc.hpp
-)
+add_library(spsc INTERFACE)
 add_library(spsc::spsc ALIAS spsc)
 
+target_sources(spsc
+    INTERFACE
+    spsc.hpp
+)
+
 target_include_directories(spsc
-    PUBLIC
+    INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
-
-target_compile_options(spsc PRIVATE
-    ${SPSC_WARNING_OPTIONS}
-    -O3
-    -DNDEBUG
-)
-
-if(BUILD_TESTING)
-    target_compile_options(spsc PRIVATE
-        -fsanitize=address,undefined
-        -fno-omit-frame-pointer
-    )
-endif()
