@@ -8,9 +8,10 @@
 TEST(SpscTests, TestExecutableRuns)
 {
   constexpr std::size_t Size = 10;
+  constexpr int expectedValue = 5;
   spsc::Queue<int, Size> queue{};
-  queue.push(5);
-  ASSERT_EQ(queue.pop(), 5);
+  queue.push(int{ expectedValue });
+  ASSERT_EQ(queue.pop(), expectedValue);
 }
 
 /**
@@ -76,7 +77,7 @@ TEST(SpscTests, MoveOnlyValue)
   EXPECT_EQ(value, nullptr);
   ASSERT_EQ(queue.Count(), 1U);
 
-  std::unique_ptr<int> result = queue.pop();
+  const std::unique_ptr<int> result = queue.pop();
   ASSERT_NE(result, nullptr);
   EXPECT_EQ(*result, expectedValue);
   EXPECT_EQ(queue.Count(), 0U);

@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <condition_variable>
 #include <cstddef>
 #include <mutex>
@@ -25,7 +26,7 @@ private:
   mutable std::mutex mutex_;
   std::condition_variable cv_;
 
-  T storage_[Size] = {};
+  std::array<T, Size> storage_{};
 
   /* Next to write */
   std::size_t head_ = 0;
@@ -36,7 +37,7 @@ private:
    * Currently stored elements count
    * NOT THREAD SAFE
    */
-  constexpr inline std::size_t CountInternal() const
+  constexpr std::size_t CountInternal() const
   {
     return (head_ + Size - tail_) % Size;
   }
@@ -45,7 +46,7 @@ private:
    * Returns true if the queue is full, false otherwise.
    * NOT THREAD SAFE
    */
-  constexpr inline bool IsFull() const
+  constexpr bool IsFull() const
   {
     return CountInternal() == Capacity();
   }
@@ -54,13 +55,14 @@ private:
    * Returns true if the queue is empty, false otherwise.
    * NOT THREAD SAFE
    */
-  constexpr inline bool IsEmpty() const
+  constexpr bool IsEmpty() const
   {
     return head_ == tail_;
   }
 
 public:
   Queue() = default;
+  ~Queue() = default;
   Queue(const Queue &) = delete;
   Queue(Queue &&) = delete;
   Queue &operator=(const Queue &) = delete;
@@ -79,11 +81,11 @@ public:
    * Pushes an element into the queue. If the queue is full, the function blocks until space is available.
    * @param el Element to be pushed into the queue.
    */
-  void push(T &&el)
+  void push(T &&element)
   {
     std::unique_lock<std::mutex> lock{ mutex_ };
     cv_.wait(lock, [this] { return !IsFull(); });
-    storage_[head_] = std::move(el);
+    storage_[head_] = std::move(element);
     head_ = (head_ + 1) % Size;
   }
 
@@ -95,10 +97,10 @@ public:
   {
     std::unique_lock<std::mutex> lock{ mutex_ };
     cv_.wait(lock, [this] { return !IsEmpty(); });
-    T el{};
-    std::swap(el, storage_[tail_]);
+    T value{};
+    std::swap(value, storage_[tail_]);
     tail_ = (tail_ + 1) % Size;
-    return el;
+    return value;
   }
 
   /**

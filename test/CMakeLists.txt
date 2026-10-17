@@ -19,7 +19,7 @@ include(GoogleTest)
 gtest_discover_tests(spsc_tests)
 
 if(CLANG_TIDY_EXECUTABLE)
-    spsc_add_tidy_check(spsc_tests "${SPSC_CLANG_TIDY_CONFIG}"
+    spsc_add_tidy_check(spsc_tests "${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy"
         "${CMAKE_CURRENT_SOURCE_DIR}/spsc_test.cpp"
     )
 endif()
