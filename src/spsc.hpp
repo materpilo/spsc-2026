@@ -87,6 +87,8 @@ public:
     cv_.wait(lock, [this] { return !IsFull(); });
     storage_[head_] = std::move(element);
     head_ = (head_ + 1) % Size;
+    lock.unlock();
+    cv_.notify_one();
   }
 
   /**
@@ -100,6 +102,8 @@ public:
     T value{};
     std::swap(value, storage_[tail_]);
     tail_ = (tail_ + 1) % Size;
+    lock.unlock();
+    cv_.notify_one();
     return value;
   }
 
