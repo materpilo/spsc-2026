@@ -44,3 +44,7 @@ cmake --build --preset gcc-ninja --target spsc_format
 
 If a checker is not installed, CMake emits a warning and continues; the
 corresponding target is unavailable.
+
+## References
+
+Project structure is inspired by https://github.com/cpp-best-practices/cmake_template, especially compiler warning flags and linter/formatter configuration.
