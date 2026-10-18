@@ -22,7 +22,7 @@ set(SPSC_WARNING_OPTIONS
 # Files with format specification for tidy and format checks
 # They are used when adding files in each component
 set(SPSC_CLANG_TIDY_CONFIG "${PROJECT_SOURCE_DIR}/.clang-tidy")
-set(SPSC_CLANG_FORMAT_CONFIG "${PROJECT_SOURCE_DIR}/clang-format")
+set(SPSC_CLANG_FORMAT_CONFIG "${PROJECT_SOURCE_DIR}/.clang-format")
 
 include(cmake/ClangTidy.cmake)
 include(cmake/ClangFormat.cmake)
