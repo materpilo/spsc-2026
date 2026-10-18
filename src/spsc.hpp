@@ -37,19 +37,20 @@ private:
   std::size_t tail_ = 0;
 
   /**
-   * Currently stored elements count
+   * Returns currently stored elements count
    * NOT THREAD SAFE
    */
-  constexpr std::size_t CountInternal() const
+  std::size_t CountInternal() const
   {
-    return (head_ + Size - tail_) % Size;
+    // negative wrap-around is correctly handled by uint arithmetic
+    return (head_ - tail_) % Size;
   }
 
   /**
    * Returns true if the queue is full, false otherwise.
    * NOT THREAD SAFE
    */
-  constexpr bool IsFull() const
+  bool IsFull() const
   {
     return CountInternal() == Capacity();
   }
@@ -58,7 +59,7 @@ private:
    * Returns true if the queue is empty, false otherwise.
    * NOT THREAD SAFE
    */
-  constexpr bool IsEmpty() const
+  bool IsEmpty() const
   {
     return head_ == tail_;
   }
