@@ -6,7 +6,10 @@
 
 #include "spsc.hpp"
 
-TEST(SpscTests, TestExecutableRuns)
+/**
+ * Test basic functionality of the queue with a single push and pop operation.
+ */
+TEST(SpscTests, SunnyScenario)
 {
   constexpr std::size_t Size = 10;
   constexpr int ExpectedValue = 5;
@@ -16,7 +19,7 @@ TEST(SpscTests, TestExecutableRuns)
 }
 
 /**
- * Test boundaries on a small queue of size 2 - 1 element available.
+ * Test boundaries on a small queue of size 2, where 1 element is available.
  * Push and pop single element on every position in the queue and check the count after each operation.
  */
 TEST(SpscTests, CapacityBoundarySmallQueue)
@@ -65,6 +68,9 @@ TEST(SpscTests, CapacityBoundary)
   ASSERT_EQ(queue.Count(), 0U);
 }
 
+/**
+ * Test that the queue can handle move-only types, specifically std::unique_ptr.
+ */
 TEST(SpscTests, MoveOnlyValue)
 {
   constexpr std::size_t Size = 2U;
@@ -84,75 +90,93 @@ TEST(SpscTests, MoveOnlyValue)
   EXPECT_EQ(queue.Count(), 0U);
 }
 
-// Templates used by test for various types.
+/**
+ * Template helpers used by stress tests for various types contained by queue.
+ * They operate on an integer index value and corresponding representation in given type.
+ */
 
-// Create a value of type T from an index.
+// Create a value of type T from an integer.
 template<class T>
-T FromIndex(std::size_t);
-// Check if value of type T is equal as it was created from given index
+T FromInt(int value);
+// Check if value of type T is equal to value created from given integer.
 template<class T>
-bool IsEqualToIndex(std::size_t index, const T &value);
+bool IsEqualToInt(int expected_value, const T &test_value);
 
-// int
+// Specializations for 'int'
 template<>
-int FromIndex<int>(std::size_t value)
+int FromInt<int>(int value)
 {
-  return static_cast<int>(value);
+  return value;
 }
 template<>
-bool IsEqualToIndex<int>(std::size_t index, const int &value)
+bool IsEqualToInt<int>(int expected_value, const int &test_value)
 {
-  return static_cast<std::size_t>(value) == index;
+  return test_value == expected_value;
 }
 
-// std::unique_ptr<int>
+// Specializations for 'std::unique_ptr<int>'
 template<>
-std::unique_ptr<int> FromIndex<std::unique_ptr<int>>(std::size_t value)
+std::unique_ptr<int> FromInt<std::unique_ptr<int>>(int value)
 {
-  return std::make_unique<int>(static_cast<int>(value));
+  return std::make_unique<int>(value);
+}
+template<>// precondition: test_value is not nullptr
+bool IsEqualToInt<std::unique_ptr<int>>(int expected_value, const std::unique_ptr<int> &test_value)
+{
+  return *test_value == expected_value;
+}
+
+struct Foo
+{
+  int a;
+  int b;
+  int c;
+};
+
+// Specializations for 'struct Foo'
+template<>
+Foo FromInt<Foo>(int value)
+{
+  return Foo{ .a = value, .b = value, .c = value };
 }
 
 template<>
-bool IsEqualToIndex<std::unique_ptr<int>>(std::size_t index, const std::unique_ptr<int> &value)
+bool IsEqualToInt<Foo>(int expected_value, const Foo &test_value)
 {
-  return value != nullptr && static_cast<std::size_t>(*value) == index;
+  return (test_value.a == expected_value) && (test_value.b == expected_value) && (test_value.c == expected_value);
 }
 
-template<class TestedType>
-void RunConcurrentProducerConsumerStress()
+
+template<class T>
+class SpscStressTest : public ::testing::Test
+{
+};
+
+using SpscStressTypes = ::testing::Types<int, std::unique_ptr<int>, Foo>;
+TYPED_TEST_SUITE(SpscStressTest, SpscStressTypes);
+
+TYPED_TEST(SpscStressTest, ConcurrentProducerConsumer)
 {
   constexpr std::size_t Size = 64U;
-  constexpr std::size_t InsertionCount = 1'000'000U;
-  spsc::Queue<TestedType, Size> queue{};
+  constexpr int InsertionCount = 1'000'000;
+  spsc::Queue<TypeParam, Size> queue{};
 
   std::thread producer([&queue] {
-    for (std::size_t index = 0U; index < InsertionCount; ++index) {
-      queue.push(FromIndex<TestedType>(index));
+    for (int index = 0; index < InsertionCount; ++index) {
+      queue.push(FromInt<TypeParam>(index));
     }
   });
 
-  bool values_match = true;
-  std::size_t first_mismatch_index = InsertionCount;
-  for (std::size_t index = 0U; index < InsertionCount; ++index) {
-    const TestedType actual_value = queue.pop();
-    if (!IsEqualToIndex<TestedType>(index, actual_value) && values_match) {
-      values_match = false;
-      first_mismatch_index = index;
+  for (int index = 0; index < InsertionCount; ++index) {
+    const TypeParam actual_value = queue.pop();
+    if (!IsEqualToInt<TypeParam>(index, actual_value)) {
+      // FAIL() exits function. Destruction of the producer thread object
+      // will terminate the program. Not the most graceful but simple and deterministic.
+      FAIL() << "First mismatch at index " << index;
     }
   }
 
   producer.join();
 
-  EXPECT_TRUE(values_match) << "First mismatch at index " << first_mismatch_index;
   EXPECT_EQ(queue.Count(), 0U);
-}
-
-TEST(SpscTests, ConcurrentProducerConsumerStress)
-{
-  RunConcurrentProducerConsumerStress<int>();
-}
-
-TEST(SpscTests, ConcurrentProducerConsumerStressUniquePtr)
-{
-  RunConcurrentProducerConsumerStress<std::unique_ptr<int>>();
 }
