@@ -26,3 +26,9 @@ CheckOptions:
     value: 'x|y|z'
   - key: readability-identifier-length.IgnoredParameterNames
     value: 'x|y|z'
+  - key: readability-identifier-naming.LocalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: CamelCase
