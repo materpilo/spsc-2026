@@ -1,10 +1,14 @@
 #pragma once
 #include <array>
+#include <concepts>
 #include <condition_variable>
 #include <cstddef>
 #include <mutex>
 
 namespace spsc {
+
+template<class T>
+concept QueueElement = std::default_initializable<T> && (std::copyable<T> || std::movable<T>);
 
 /**
  * Single Producer - Single Consumer Queue
@@ -12,12 +16,11 @@ namespace spsc {
  * @tparam T Type of the elements stored in the queue
  * @tparam Size - size of underlying storage. Queue stores up to Size-1 elements.
  *
- * Queue is implemented as FIFO circular buffer. It is optimized for single producer and single consumer threads.
- * The access is synchronized on single condition variable, therefore it is optimized for single producer and single
- * consumer threads. The maximum number of elements that can be stored in the queue is (Size - 1) because one empty slot
- * is used to signal full condition.
+ * Queue is implemented as FIFO circular buffer.  The access is synchronized on single condition variable, therefore it
+ * is optimized for single producer and single consumer threads. The maximum number of elements that can be stored in
+ * the queue is (Size - 1) because one empty slot is used to signal full condition.
  */
-template<class T, std::size_t Size>
+template<QueueElement T, std::size_t Size>
 class Queue
 {
   static_assert(Size >= 2, "Size must be at least 2");
