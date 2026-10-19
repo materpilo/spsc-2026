@@ -56,6 +56,17 @@ cmake --build --preset gcc-ninja --target spsc_format
 If a checker is not installed, CMake emits a warning and continues; the
 corresponding target is unavailable.
 
+## Continuous integration
+
+The GitHub Actions CI job runs on pushes to `main`. It provisions a fresh
+Ubuntu 24.04 runner, installs the build and analysis tools, then configures the
+project and runs formatting checks, clang-tidy, the build, and tests. This is a
+simple setup: a new runner image is re-created on every run. 
+
+Possible improvements: 
+- Store the image permanently and reuse it.
+- Trigger the build only when relevant files were modified
+
 ## References
 
 Project structure is inspired by https://github.com/cpp-best-practices/cmake_template, especially compiler warning flags and linter/formatter configuration.
