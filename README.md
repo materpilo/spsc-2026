@@ -14,13 +14,13 @@ downloads GoogleTest via CPM when tests are enabled.
 
 **Tested on following versions**
 
-| Executable | Version used | Requirement |
-| --- | --- | --- |
-| CMake | 3.28.3 | 3.21 or newer |
-| GCC / G++ | 13.3.0 | C++20 support |
-| Ninja | 1.11.1 |  |
-| clang-format | 18.1.3 | Optional |
-| clang-tidy | 18.1.3 | Optional |
+| Executable | Version used |
+| --- | --- |
+| CMake | 3.28.3 |
+| GCC / G++ | 13.3.0 |
+| Ninja | 1.11.1 |
+| clang-format | 18.1.3 |
+| clang-tidy | 18.1.3 |
 
 ## Configure, build, and test
 
