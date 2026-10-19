@@ -14,7 +14,7 @@ TEST(SpscTests, SunnyScenario)
   constexpr std::size_t Size = 10;
   constexpr int ExpectedValue = 5;
   spsc::Queue<int, Size> queue{};
-  queue.push(int{ ExpectedValue });
+  queue.push(ExpectedValue);
   ASSERT_EQ(queue.pop(), ExpectedValue);
 }
 
@@ -32,7 +32,7 @@ TEST(SpscTests, CapacityBoundarySmallQueue)
   ASSERT_EQ(queue.Count(), 0U);
 
   for (std::size_t index = 0U; index < Size; ++index) {
-    queue.push(int{ ValueTopPush });
+    queue.push(ValueTopPush);
     ASSERT_EQ(queue.Count(), 1U);
     queue.pop();
     ASSERT_EQ(queue.Count(), 0U);
@@ -48,21 +48,23 @@ TEST(SpscTests, CapacityBoundarySmallQueue)
 TEST(SpscTests, CapacityBoundary)
 {
   constexpr std::size_t Size = 10U;
+  constexpr std::size_t Capacity = Size - 1U;
+
   using TestQueue = spsc::Queue<int, Size>;
   TestQueue queue{};
 
-  for (std::size_t index = 0U; index < TestQueue::Capacity(); ++index) {
-    ASSERT_LT(queue.Count(), TestQueue::Capacity());
+  EXPECT_EQ(queue.Capacity(), Capacity);
+
+  for (std::size_t index = 0U; index < Capacity; ++index) {
     queue.push(static_cast<int>(index));
     ASSERT_EQ(queue.Count(), index + 1U);
   }
 
-  ASSERT_EQ(queue.Count(), TestQueue::Capacity());
+  ASSERT_EQ(queue.Count(), Capacity);
 
-  for (std::size_t index = 0U; index < TestQueue::Capacity(); ++index) {
-    ASSERT_GT(queue.Count(), 0U);
+  for (std::size_t index = 0U; index < Capacity; ++index) {
     ASSERT_EQ(queue.pop(), static_cast<int>(index));
-    ASSERT_EQ(queue.Count(), TestQueue::Capacity() - index - 1U);
+    ASSERT_EQ(queue.Count(), Capacity - index - 1U);
   }
 
   ASSERT_EQ(queue.Count(), 0U);
@@ -76,6 +78,7 @@ TEST(SpscTests, MoveOnlyValue)
   constexpr std::size_t Size = 2U;
   constexpr int ExpectedValue = 42;
   spsc::Queue<std::unique_ptr<int>, Size> queue{};
+
   auto value = std::make_unique<int>(ExpectedValue);
 
   ASSERT_EQ(queue.Count(), 0U);
@@ -170,8 +173,8 @@ TYPED_TEST(SpscStressTest, ConcurrentProducerConsumer)
   for (int index = 0; index < InsertionCount; ++index) {
     const TypeParam actual_value = queue.pop();
     if (!IsEqualToInt<TypeParam>(index, actual_value)) {
-      // FAIL() exits function. Destruction of the producer thread object
-      // will terminate the program. Not the most graceful but simple and deterministic.
+      // FAIL() exits function. Destruction of the producer thread object will
+      // terminate the program. Not most graceful but simple and deterministic.
       FAIL() << "First mismatch at index " << index;
     }
   }

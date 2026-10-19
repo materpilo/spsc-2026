@@ -64,6 +64,22 @@ private:
     return head_ == tail_;
   }
 
+  /**
+   * Generalized push operation, with a custom copy or move operation.
+   * @param element Element to be pushed into the queue
+   * @param push_func Function that performs the actual push operation (copy or move)
+   */
+  void push_internal(auto &&element, auto &&push_func)
+  {
+    {
+      std::unique_lock<std::mutex> lock{ mutex_ };
+      cv_.wait(lock, [this] { return !IsFull(); });
+      push_func(head_, std::forward<decltype(element)>(element));
+      head_ = (head_ + 1) % Size;
+    }
+    cv_.notify_one();
+  }
+
 public:
   Queue() = default;
   ~Queue() = default;
@@ -73,42 +89,49 @@ public:
   Queue &operator=(Queue &&) = delete;
 
   /**
+   * Pops an element from the queue. If the queue is empty, the function blocks until an element is available.
+   * @return The element popped from the queue.
+   */
+  T pop()
+  {
+    T value{};
+    {
+      std::unique_lock<std::mutex> lock{ mutex_ };
+      cv_.wait(lock, [this] { return !IsEmpty(); });
+      std::swap(value, storage_[tail_]);
+      tail_ = (tail_ + 1) % Size;
+    }
+    cv_.notify_one();
+    return value;
+  }
+
+  /**
+   * Pushes a copy of an element into the queue. If the queue is full, the function blocks until space is available.
+   * @param element Element to be copied into the queue.
+   */
+  void push(const T &element)
+  {
+    push_internal(element, [this](std::size_t index, const T &el_to_push) { storage_[index] = el_to_push; });
+  }
+
+  /**
+   * Pushes an element into the queue using move operation. If the queue is full, the function blocks until space is
+   * available.
+   * @param el Element to be moved into the queue.
+   */
+  void push(T &&element)
+  {
+    push_internal(
+      std::move(element), [this](std::size_t index, T &&el_to_push) { storage_[index] = std::move(el_to_push); });
+  }
+
+  /**
    * Returns the maximum number of elements that can be stored in the queue.
    * Always (Size - 1)
    */
   static consteval std::size_t Capacity()
   {
     return Size - 1U;
-  }
-
-  /**
-   * Pushes an element into the queue. If the queue is full, the function blocks until space is available.
-   * @param el Element to be pushed into the queue.
-   */
-  void push(T &&element)
-  {
-    std::unique_lock<std::mutex> lock{ mutex_ };
-    cv_.wait(lock, [this] { return !IsFull(); });
-    storage_[head_] = std::move(element);
-    head_ = (head_ + 1) % Size;
-    lock.unlock();
-    cv_.notify_one();
-  }
-
-  /**
-   * Pops an element from the queue. If the queue is empty, the function blocks until an element is available.
-   * @return The element popped from the queue.
-   */
-  T pop()
-  {
-    std::unique_lock<std::mutex> lock{ mutex_ };
-    cv_.wait(lock, [this] { return !IsEmpty(); });
-    T value{};
-    std::swap(value, storage_[tail_]);
-    tail_ = (tail_ + 1) % Size;
-    lock.unlock();
-    cv_.notify_one();
-    return value;
   }
 
   /**
